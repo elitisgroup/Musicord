@@ -20,20 +20,37 @@ print("Musicord by Chiphyr\nNotice: Presences may take a while to update. It cou
 
 class PresenceManager {
     var appName: String
+    var appID: String
     var rpc: SwordRPC
     var times: Int = 0
+    var previousPos: Double = 0
+    
+    func continueLoop(repeats: Bool) {
+        if repeats {
+            sleep(15)
+            self.updatePresence(repeats: true)
+        }
+    }
     
     func updatePresence(repeats: Bool = true) {
         if let iTunesApp: AnyObject = SBApplication(bundleIdentifier: self.appName) {
             let track = iTunesApp.currentTrack!().properties as Dictionary<String, Any>
             
             if (track.count != 0) {
-                self.times += 1
-                print("[INFO] [\(self.times)] Sending " + (track["name"] as! String) + " by " + (track["artist"] as! String) + " to Discord")
-                
                 let now = Date().timeIntervalSince1970
                 let playerPos = iTunesApp.playerPosition()
                 let start = now - playerPos
+                
+                if self.previousPos == playerPos {
+                    var presence = RichPresence()
+                    presence.details           = "⏸"
+                    presence.assets.largeImage = "itunes"
+                    presence.assets.largeText  = "github.com/elitisgroup/Musicord"
+                    
+                    self.rpc.setPresence(presence)
+                    return self.continueLoop(repeats: repeats)
+                }
+                self.previousPos = playerPos
                 
                 var presence = RichPresence()
                 presence.details           = track["name"] as! String
@@ -42,6 +59,8 @@ class PresenceManager {
                 presence.assets.largeImage = "itunes"
                 presence.assets.largeText  = "github.com/elitisgroup/Musicord"
                 
+                self.times += 1
+                print("[INFO] [\(self.times)] Sending " + (track["name"] as! String) + " by " + (track["artist"] as! String) + " to Discord")
                 self.rpc.setPresence(presence)
             } else {
                 print("[INFO] Nothing is playing.")
@@ -50,14 +69,12 @@ class PresenceManager {
             print("App with name \(self.appName) could not be interfaced with. Possibly you didn't give permission?")
         }
         
-        if repeats {
-            sleep(15)
-            updatePresence(repeats: true)
-        }
+        self.continueLoop(repeats: repeats)
     }
     
     init(appName: String, appID: String = "660599896080121888") {
         self.rpc = SwordRPC(appId: appID)
+        self.appID = appID
         self.appName = appName;
         self.rpc.connect()
         self.rpc.onConnect { _ in
