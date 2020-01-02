@@ -3,7 +3,7 @@
 //  Musicord
 //
 //  Created by Chiphyr on 28/12/2019.
-//  Copyright © 2019 Elitis. All rights reserved.
+//  Copyright © 2020 Elitis. All rights reserved.
 //
 
 import Foundation
@@ -42,12 +42,14 @@ class PresenceManager {
                 let start = now - playerPos
                 
                 if self.previousPos == playerPos {
-                    var presence = RichPresence()
-                    presence.details           = "⏸"
-                    presence.assets.largeImage = "itunes"
-                    presence.assets.largeText  = "github.com/elitisgroup/Musicord"
+                    var pausedPresence = RichPresence()
+                    pausedPresence.details           = "⏸ Paused"
+                    pausedPresence.timestamps.start  = Date(timeIntervalSince1970: start)
+                    pausedPresence.assets.largeImage = "itunes"
+                    pausedPresence.assets.largeText  = "github.com/elitisgroup/Musicord"
                     
-                    self.rpc.setPresence(presence)
+                    print("[INFO] Something is selected, but it isn't playing. Setting presence to paused.")
+                    self.rpc.setPresence(pausedPresence)
                     return self.continueLoop(repeats: repeats)
                 }
                 self.previousPos = playerPos
@@ -63,7 +65,10 @@ class PresenceManager {
                 print("[INFO] [\(self.times)] Sending " + (track["name"] as! String) + " by " + (track["artist"] as! String) + " to Discord")
                 self.rpc.setPresence(presence)
             } else {
-                print("[INFO] Nothing is playing.")
+                let stoppedPresence = RichPresence()
+                
+                print("[INFO] Nothing is playing. Setting presence to nothing.")
+                self.rpc.setPresence(stoppedPresence)
             }
         } else {
             print("App with name \(self.appName) could not be interfaced with. Possibly you didn't give permission?")
