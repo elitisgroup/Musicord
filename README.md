@@ -1,4 +1,4 @@
-## This repository is archived.
+## This repository is archived.
 
 This means that there's no assurance that the app will work.
 
